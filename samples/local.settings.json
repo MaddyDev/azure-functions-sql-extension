@@ -3,6 +3,7 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-    "SqlConnectionString": ""
+    "SqlConnectionString": "Server=localhost\\SQL2019;Database=TestDB;Persist Security Info=False;Integrated Security=SSPI;",
+    "Sp_SelectCost": "SelectProductsCost"
   }
 }

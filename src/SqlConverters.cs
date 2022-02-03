@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
             public SqlCommand Convert(SqlAttribute attribute)
             {
                 return SqlBindingUtilities.BuildCommand(attribute, SqlBindingUtilities.BuildConnection(
-                    attribute.ConnectionStringSetting, this._configuration));
+                    attribute.ConnectionStringSetting, this._configuration), this._configuration);
             }
 
         }
@@ -110,7 +110,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
                 // SqlAsyncCollector since it does not support asynchronous operations.
                 // There is a GitHub issue open to track this
                 using var adapter = new SqlDataAdapter();
-                using SqlCommand command = SqlBindingUtilities.BuildCommand(attribute, connection);
+                using SqlCommand command = SqlBindingUtilities.BuildCommand(attribute, connection, this._configuration);
                 adapter.SelectCommand = command;
                 await connection.OpenAsync();
                 var dataTable = new DataTable();

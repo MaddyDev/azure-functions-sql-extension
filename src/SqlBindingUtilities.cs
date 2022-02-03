@@ -56,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
         /// <exception cref="ArgumentNullException">
         /// Thrown if command is null
         /// </exception>
-        public static void ParseParameters(string parameters, SqlCommand command)
+        public static void ParseParameters(string parameters, SqlCommand command, IConfiguration configuration)
         {
             if (command == null)
             {
@@ -82,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
                            "i.e. \"@param1=param1,@param2=param2\". To specify a null value, use null, as in \"@param1=null,@param2=param2\"." +
                            "To specify an empty string as a value, simply do not add anything after the equals sign, as in \"@param1=,@param2=param2\".");
                     }
-                    if (!items[0].StartsWith("@", StringComparison.InvariantCultureIgnoreCase))
+                    if (!items[0].StartsWith("@", StringComparison.InvariantCultureIgnoreCase) || !items[0].StartsWith("@", StringComparison.InvariantCultureIgnoreCase))
                     {
                         throw new ArgumentException("Parameter name must start with \"@\", i.e. \"@param1=param1,@param2=param2\"");
                     }
@@ -94,11 +94,43 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
                     }
                     else
                     {
+                        if (items[0].StartsWith("%", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            command.Parameters.Add(new SqlParameter(GetParameterFromConfig(items[0], configuration), items[1]));
+                        }
                         command.Parameters.Add(new SqlParameter(items[0], items[1]));
                     }
 
                 }
             }
+        }
+
+        public static string ParseCommand(string commandText, IConfiguration configuration)
+        {
+            if (string.IsNullOrEmpty(commandText))
+            {
+                throw new ArgumentException("Must specify CommandText, which should either be the query to be executed or refer to a " +
+                    "StoreProcedure in the app setting");
+            }
+            if (commandText.StartsWith('%'))
+            {
+                commandText = GetParameterFromConfig(GetAttributeSettingName(commandText), configuration);
+            }
+            return commandText;
+        }
+
+        public static string GetParameterFromConfig(string parameterNameSetting, IConfiguration configuration)
+        {
+            if (string.IsNullOrEmpty(parameterNameSetting))
+            {
+                throw new ArgumentException("Must specify ConnectionStringSetting, which should refer to the name of an app setting that " +
+                    "contains a SQL connection string");
+            }
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            return configuration.GetConnectionStringOrSetting(parameterNameSetting);
         }
 
         /// <summary>
@@ -112,12 +144,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
         /// raw queries (the Text CommandType).
         /// </exception>
         /// <returns>The built SqlCommand</returns>
-        public static SqlCommand BuildCommand(SqlAttribute attribute, SqlConnection connection)
+        public static SqlCommand BuildCommand(SqlAttribute attribute, SqlConnection connection, IConfiguration configuration)
         {
             var command = new SqlCommand
             {
                 Connection = connection,
-                CommandText = attribute.CommandText
+                CommandText = ParseCommand(attribute.CommandText, configuration)
             };
             if (attribute.CommandType == CommandType.StoredProcedure)
             {
@@ -128,7 +160,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
                 throw new ArgumentException("The Type of the SQL attribute for an input binding must be either CommandType.Text for a plain text" +
                     "SQL query, or CommandType.StoredProcedure for a stored procedure.");
             }
-            ParseParameters(attribute.Parameters, command);
+            ParseParameters(attribute.Parameters, command, configuration);
             return command;
         }
 
@@ -189,6 +221,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
         public static string AsSingleQuoteEscapedString(this string s)
         {
             return s.Replace("'", "''");
+        }
+
+        /// <summary>
+        /// Returns the string with any percentile in it removed (replaced with '')
+        /// </summary>
+        public static string GetAttributeSettingName(this string s)
+        {
+            return s.Replace("%", "");
         }
     }
 }

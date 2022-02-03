@@ -53,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
         [Fact]
         public void TestNullCommand()
         {
-            Assert.Throws<ArgumentNullException>(() => SqlBindingUtilities.ParseParameters("", null));
+            Assert.Throws<ArgumentNullException>(() => SqlBindingUtilities.ParseParameters("", null, null));
         }
 
         [Fact]
@@ -93,12 +93,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
             {
                 CommandType = System.Data.CommandType.TableDirect
             };
-            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.BuildCommand(attribute, null));
+            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.BuildCommand(attribute, null, null));
 
 
             // Don't specify a type at all
             attribute = new SqlAttribute("");
-            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.BuildCommand(attribute, null));
+            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.BuildCommand(attribute, null, null));
         }
 
         [Fact]
@@ -109,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
             {
                 CommandType = System.Data.CommandType.Text
             };
-            SqlCommand command = SqlBindingUtilities.BuildCommand(attribute, null);
+            SqlCommand command = SqlBindingUtilities.BuildCommand(attribute, null, null);
             Assert.Equal(System.Data.CommandType.Text, command.CommandType);
             Assert.Equal(query, command.CommandText);
 
@@ -118,7 +118,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
             {
                 CommandType = System.Data.CommandType.StoredProcedure
             };
-            command = SqlBindingUtilities.BuildCommand(attribute, null);
+            command = SqlBindingUtilities.BuildCommand(attribute, null, null);
             Assert.Equal(System.Data.CommandType.StoredProcedure, command.CommandType);
             Assert.Equal(procedure, command.CommandText);
         }
@@ -129,21 +129,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
             var command = new SqlCommand();
             // Second param name doesn't start with "@"
             string parameters = "@param1=param1,param2=param2";
-            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command));
+            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command, null));
 
             // Second param not separated by "=", or contains extra "="
             parameters = "@param1=param1,@param2==param2";
-            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command));
+            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command, null));
             parameters = "@param1=param1,@param2;param2";
-            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command));
+            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command, null));
             parameters = "@param1=param1,@param2=param2=";
-            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command));
+            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command, null));
 
             // Params list not separated by "," correctly
             parameters = "@param1=param1;@param2=param2";
-            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command));
+            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command, null));
             parameters = "@param1=param1,@par,am2=param2";
-            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command));
+            Assert.Throws<ArgumentException>(() => SqlBindingUtilities.ParseParameters(parameters, command, null));
         }
 
         [Fact]
@@ -151,7 +151,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
         {
             var command = new SqlCommand();
             string parameters = "@param1=param1,@param2=param2";
-            SqlBindingUtilities.ParseParameters(parameters, command);
+            SqlBindingUtilities.ParseParameters(parameters, command, null);
 
             // Apparently SqlParameter doesn't implement an Equals method, so have to do this manually
             Assert.Equal(2, command.Parameters.Count);
@@ -172,7 +172,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
             // parameter pairs
             command = new SqlCommand();
             parameters = ",,@param1=param1,,@param2=param2,,,";
-            SqlBindingUtilities.ParseParameters(parameters, command);
+            SqlBindingUtilities.ParseParameters(parameters, command, null);
 
             Assert.Equal(2, command.Parameters.Count);
             foreach (SqlParameter param in command.Parameters)
@@ -192,7 +192,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
             // a string like "@param1=,@param2=param2" as @param1 having an empty string as its value
             command = new SqlCommand();
             parameters = "@param1=,@param2=null";
-            SqlBindingUtilities.ParseParameters(parameters, command);
+            SqlBindingUtilities.ParseParameters(parameters, command, null);
 
             Assert.Equal(2, command.Parameters.Count);
             foreach (SqlParameter param in command.Parameters)
@@ -211,7 +211,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Tests.Unit
             // Confirm nothing is done when parameters are not specified
             command = new SqlCommand();
             parameters = null;
-            SqlBindingUtilities.ParseParameters(parameters, command);
+            SqlBindingUtilities.ParseParameters(parameters, command, null);
             Assert.Equal(0, command.Parameters.Count);
         }
 

@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql.Samples.InputBindingSamples
         public static IActionResult Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "getproducts-storedprocedure/{cost}")]
             HttpRequest req,
-            [Sql("SelectProductsCost",
+            [Sql("%Sp_SelectCost%",
                 CommandType = System.Data.CommandType.StoredProcedure,
                 Parameters = "@Cost={cost}",
                 ConnectionStringSetting = "SqlConnectionString")]
