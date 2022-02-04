@@ -82,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
                            "i.e. \"@param1=param1,@param2=param2\". To specify a null value, use null, as in \"@param1=null,@param2=param2\"." +
                            "To specify an empty string as a value, simply do not add anything after the equals sign, as in \"@param1=,@param2=param2\".");
                     }
-                    if (!items[0].StartsWith("@", StringComparison.InvariantCultureIgnoreCase) || !items[0].StartsWith("@", StringComparison.InvariantCultureIgnoreCase))
+                    if (!items[0].StartsWith("@", StringComparison.InvariantCultureIgnoreCase))
                     {
                         throw new ArgumentException("Parameter name must start with \"@\", i.e. \"@param1=param1,@param2=param2\"");
                     }
@@ -94,11 +94,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
                     }
                     else
                     {
-                        if (items[0].StartsWith("%", StringComparison.InvariantCultureIgnoreCase))
+                        if (items[1].StartsWith("%", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            command.Parameters.Add(new SqlParameter(GetParameterFromConfig(items[0], configuration), items[1]));
+                            command.Parameters.Add(new SqlParameter(items[0], GetParameterFromConfig(items[1], configuration)));
                         }
-                        command.Parameters.Add(new SqlParameter(items[0], items[1]));
+                        else
+                        {
+                            command.Parameters.Add(new SqlParameter(items[0], items[1]));
+                        }
                     }
 
                 }
@@ -123,8 +126,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Sql
         {
             if (string.IsNullOrEmpty(parameterNameSetting))
             {
-                throw new ArgumentException("Must specify ConnectionStringSetting, which should refer to the name of an app setting that " +
-                    "contains a SQL connection string");
+                throw new ArgumentException("Must specify the Parameter, which should refer to the name of an app setting that " +
+                    "contains the setting value");
             }
             if (configuration == null)
             {
